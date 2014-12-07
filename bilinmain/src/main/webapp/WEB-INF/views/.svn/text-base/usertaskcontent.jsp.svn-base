@@ -1,0 +1,193 @@
+<%@page import="org.jbpm.taskmgmt.exe.TaskInstance"%>
+<%@page import="java.util.List"%>
+<%@page import="cn.iscas.nfsplatform.dao.entity.twp.TwpProject"%>
+<%@page import="cn.iscas.nfsplatform.dao.entity.UserRole"%>
+<%@page import="cn.iscas.nfsplatform.dao.entity.Flow"%>
+<%@page import="cn.iscas.nfsplatform.dao.entity.UserGroup"%>
+<%@page import="java.text.SimpleDateFormat"%>
+<%@page import="java.util.Date"%>
+<%@page import="cn.iscas.nfsplatform.pojo.IndexContent"%>
+<%@ page language="java" contentType="text/html; charset=utf-8"
+	pageEncoding="utf-8"%>
+<%
+	String path = request.getContextPath();
+	String basePath = request.getScheme() + "://"
+			+ request.getServerName()
+			+ path + "/";
+	
+	//basePath2 is used for special use: creating flows
+	String basePath2 = request.getScheme() + "://"
+			+ request.getServerName() + ":" + request.getServerPort()
+			+ path + "/";
+	String username=request.getSession().getAttribute("username").toString();
+	Object userid=request.getSession().getAttribute("userid");
+	
+	List<TaskInstance> usertasks = (List<TaskInstance>)request.getAttribute("usertasks");
+	
+%>
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8"/>
+	<title>NFS平台集成管理界面</title>
+	
+	<link rel="stylesheet" href="<%=basePath%>css/layout.css" type="text/css" media="screen" />
+	<!--[if lt IE 9]>
+	<link rel="stylesheet" href="css/ie.css" type="text/css" media="screen" />
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<script type="text/javascript"
+	src="<%=basePath%>script/jsPlumb/jquery-1.9.0.js"></script>
+	<script src="<%=basePath%>js/hideshow.js" type="text/javascript"></script>
+	<script src="<%=basePath%>js/jquery.tablesorter.min.js" type="text/javascript"></script>
+	<script type="text/javascript" src="<%=basePath%>js/jquery.equalHeight.js"></script>
+	<script type="text/javascript">
+	$(document).ready(function() 
+    	{ 
+      	  $(".tablesorter").tablesorter(); 
+   	 } 
+	);
+	$(document).ready(function() {
+
+	//When page loads...
+	$(".tab_content").hide(); //Hide all content
+	$("ul.tabs li:first").addClass("active").show(); //Activate first tab
+	$(".tab_content:first").show(); //Show first tab content
+
+	//On Click Event
+	$("ul.tabs li").click(function() {
+
+		$("ul.tabs li").removeClass("active"); //Remove any "active" class
+		$(this).addClass("active"); //Add "active" class to selected tab
+		$(".tab_content").hide(); //Hide all tab content
+
+		var activeTab = $(this).find("a").attr("href"); //Find the href attribute value to identify the active tab + content
+		$(activeTab).fadeIn(); //Fade in the active ID content
+		return false;
+	});
+
+});
+    </script>
+    <script type="text/javascript">
+    $(function(){
+        $('.column').equalHeight();
+    });
+</script>
+
+<script type="text/javascript" src="<%=basePath%>script/gotourl.js"></script>
+
+</head>
+
+
+<body>
+
+	<input style="display: none" value="<%=basePath%>" id="basePath" />
+	<input style="display: none" value="<%=userid%>" id="userId" />	
+	
+	<section id="main" class="column">
+		
+		<article class="module width_full">
+			<header><h3 class="tabs_involved">尚未开始的任务：</h3>
+			<ul class="tabs">
+	   			<li><a href="#tab1">任务列表</a></li>
+			</ul>
+			</header>
+
+			<div class="tab_container">
+				<div id="tab1" class="tab_content">
+					<table class="tablesorter" cellspacing="0"> 
+						<thead> 
+							<tr>
+								<th></th>
+			    				<th>任务名称</th> 
+			    				<th>任务开始时间</th>
+			    				<th>任务结束时间</th>
+			    				<th>操作</th>  
+							</tr> 
+						</thead> 
+						<tbody>
+							<%
+								if(usertasks != null){
+									for(TaskInstance t : usertasks){
+										if(t.getStart() == null){
+							%>
+									<tr> 
+										<td></td>
+										<td style="display:none"><%=t.getId() %></td>
+					    				<td><%=t.getName() %></td> 
+					    				<td>尚未开始</td>
+					    				<td>尚未结束</td>  
+					    				<td><input type="image" onclick="operateTask(<%=t.getId() %>)" src="../images/icn_edit.png" title="开始任务"></td> 
+									</tr>  
+							<%			}				
+									}
+								}
+							%> 
+			
+						</tbody> 
+					</table>
+				</div><!-- end of #tab1 -->
+							
+			</div><!-- end of .tab_container -->
+		
+		</article><!-- end of content manager article -->
+		
+		
+		<article class="module width_full">
+			<header><h3 class="tabs_involved">尚未结束的任务：</h3>
+			<ul class="tabs">
+	   			<li><a href="#tab2">任务列表</a></li>
+			</ul>
+			</header>
+
+			<div class="tab_container">
+				<div id="tab2" class="tab_content">
+					<table class="tablesorter" cellspacing="0"> 
+						<thead> 
+							<tr>
+								<th></th>
+			    				<th>任务名称</th> 
+			    				<th>任务开始时间</th>
+			    				<th>任务结束时间</th>
+			    				<th>操作</th>  
+							</tr> 
+						</thead> 
+						<tbody>
+							<%
+								if(usertasks != null){
+									for(TaskInstance t : usertasks){
+										if(t.getStart() != null && t.getEnd() == null){
+							%>
+									<tr> 
+										<td></td>
+										<td style="display:none"><%=t.getId() %></td>
+					    				<td><%=t.getName() %></td> 
+					    				<td><%=t.getStart() %></td>
+					    				<td>尚未结束</td>  
+					    				<td>
+					    					<!--  不让用户直接结束  最好在查看界面结束
+					    					<input type="image" onclick="endTask(<%=t.getId() %>)" src="../images/icn_edit.png" title="结束任务">
+					    					-->
+					    					<input type="image" onclick="showTask(<%=t.getId() %>)" src="../images/icn_categories.png" title="查看任务">
+					    				</td> 
+									</tr>  
+							<%			
+										}
+									}
+								}
+							%> 
+			
+						</tbody> 
+					</table>
+				</div><!-- end of #tab1 -->
+							
+			</div><!-- end of .tab_container -->
+		
+		</article><!-- end of content manager article -->
+				
+	</section>
+
+</body>
+
+</html>

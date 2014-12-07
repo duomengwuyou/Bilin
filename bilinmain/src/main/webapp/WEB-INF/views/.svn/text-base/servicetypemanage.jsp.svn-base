@@ -1,0 +1,224 @@
+﻿<%@page import="cn.iscas.nfsplatform.dao.entity.ServiceType"%>
+<%@page import="cn.iscas.nfsplatform.dao.entity.ToolService"%>
+<%@page import="cn.iscas.nfsplatform.dao.entity.Tool"%>
+<%@page import="java.util.List"%>
+<%@ page language="java" contentType="text/html; charset=utf-8"
+	pageEncoding="utf-8"%>
+<%
+	String path = request.getContextPath();
+	String basePath = request.getScheme() + "://"
+			+ request.getServerName()
+			+ path + "/";
+	String username=request.getSession().getAttribute("username").toString();
+	Object userid=request.getSession().getAttribute("userid");
+	
+	
+	List<Tool> tools = (List<Tool>)request.getSession().getAttribute("servicetypetools");
+	String choosedtoolid = (String)request.getSession().getAttribute("choosedtoolid");
+	
+	List<ServiceType> servicetypes = (List<ServiceType>)request.getSession().getAttribute("servicetypes");
+%>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8"/>
+	<title>NFS平台集成管理界面</title>
+	
+	<link rel="stylesheet" href="<%=basePath%>css/layout.css" type="text/css" media="screen" />
+	<!--[if lt IE 9]>
+	<link rel="stylesheet" href="css/ie.css" type="text/css" media="screen" />
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<script type="text/javascript"
+	src="<%=basePath %>script/jsPlumb/jquery-1.9.0.js"></script>
+	<script src="<%=basePath%>js/hideshow.js" type="text/javascript"></script>
+	<script src="<%=basePath%>js/jquery.tablesorter.min.js" type="text/javascript"></script>
+	<script type="text/javascript" src="<%=basePath%>js/jquery.equalHeight.js"></script>
+	
+	
+	<link href="<%=basePath%>css/bootstrap.css" rel="stylesheet">
+
+	<script type="text/javascript"
+		src="<%=basePath%>script/bootstrap.min.js"></script>
+	<script type="text/javascript"
+		src="<%=basePath%>script/jquery.elastic.source.js"></script>
+
+	<script type="text/javascript">
+	$(document).ready(function() 
+    	{ 
+      	  $(".tablesorter").tablesorter(); 
+   	 } 
+	);
+	$(document).ready(function() {
+
+	//When page loads...
+	$(".tab_content").hide(); //Hide all content
+	$("ul.tabs li:first").addClass("active").show(); //Activate first tab
+	$(".tab_content:first").show(); //Show first tab content
+
+	//On Click Event
+	$("ul.tabs li").click(function() {
+
+		$("ul.tabs li").removeClass("active"); //Remove any "active" class
+		$(this).addClass("active"); //Add "active" class to selected tab
+		$(".tab_content").hide(); //Hide all tab content
+
+		var activeTab = $(this).find("a").attr("href"); //Find the href attribute value to identify the active tab + content
+		$(activeTab).fadeIn(); //Fade in the active ID content
+		return false;
+	});
+
+});
+    </script>
+    <script type="text/javascript">
+    $(function(){
+        $('.column').equalHeight();
+    });
+</script>
+
+<script type="text/javascript" src="<%=basePath%>script/gotourl.js"></script>
+<script type="text/javascript" src="<%=basePath%>script/servicetooltype.js"></script>
+
+</head>
+
+
+
+<body>
+
+	<input style="display: none" value="<%=basePath%>" id="basePath" />
+	<input style="display: none" value="<%=userid%>" id="userId" />	
+	
+	<section id="main" class="module width_full" style="width: 95%;">
+
+	  <article class="module width_full">
+		<header><h3 class="tabs_involved">所有工具信息维护</h3>
+		<ul class="tabs">
+   			<li><a href="#tab1">工具列表</a></li>
+		</ul>
+		</header>
+
+		<div class="tab_container">
+			<div id="tab1" class="tab_content">
+			<table class="tablesorter" cellspacing="0" id="toolstable"> 
+			<thead> 
+				<tr> 
+   					<th></th>
+    				<th>工具名称</th> 
+    				<th>工具描述</th> 
+    				<th>工具服务总量</th> 
+    				<th>操作</th> 
+				</tr> 
+			</thead> 
+			<tbody> 
+				
+					<%
+						for(Tool t : tools){
+					%>
+					<tr> 
+							<td></td> 
+		    				<td><%=t.getToolname() %></td> 
+		    				<td><%=t.getDescription() %></td> 
+		    				<td><%=t.getServices().size() %></td> 
+		    				<td>
+		    				<%
+		    				   if(t.getServices().size()  != 0){
+		    				%>
+		    				<input type="image" src="<%=basePath%>images/icn_categories.png" onclick="showToolServices('<%=t.getId() %>')" title="查看工具服务">
+		    				<%
+		    				   }
+		    				%>
+		    				
+		    				</td>
+	    			</tr>
+	    		   <%} %>
+			</tbody> 
+			</table>
+			</div><!-- end of #tab1 -->
+			
+		  </div><!-- end of .tab_container -->
+		
+	    </article><!-- end of content manager article -->
+		
+		<div class="clear"></div>
+		
+		
+		<%
+			if(choosedtoolid != null){
+				for(Tool t : tools){
+					if(t.getId() == Integer.parseInt(choosedtoolid)){
+		%>
+		  <article class="module width_full">
+			<header><h3 class="tabs_involved" id="toolserviceshead"><%=t.getToolname() %>服务</h3></header>
+	
+			<div class="tab_container">
+				<table class="tablesorter" cellspacing="0" id="toolservicestable"> 
+				<thead> 
+					<tr> 
+	   					<th></th>
+	    				<th>服务名称</th> 
+	    				<th>服务类型</th> 
+	    				<th>操作</th> 
+					</tr> 
+				</thead> 
+				<tbody  id="toolservicesinfors"> 
+				<%
+					List<ToolService> services = t.getServices();
+					for(ToolService s : services){ 
+				%>
+					<tr>
+						<td></td>
+						<td><%=s.getServicename() %></td>
+						
+						<td>
+						
+						<% 
+							String stname = s.getServicetype().getServicetypename();
+							if(servicetypes != null){
+								
+						%>
+							<select id="<%=s.getId()%>service">
+						<%			
+								for(ServiceType st : servicetypes){
+									if(st.getServicetypename().equals(stname)){
+						%>
+										<option value="<%=st.getServicetypeid()%>" selected="selected"><%=st.getServicetypename() %></option>		
+						<%
+									}else{
+						%>	
+										<option value="<%=st.getServicetypeid()%>"><%=st.getServicetypename() %></option>		
+						<%
+									}
+								}
+						%>
+							</select>
+						<%
+							}else{
+						%>
+							数据有误
+						<% } %>
+						</td>
+						<td>
+							<input type="image" src="<%=basePath%>images/icn_edit.png" onclick="editToolServices('<%=s.getId() %>')" title="修改工具服务">
+						</td>
+					</tr>
+				<% 
+					}
+				%>
+				</tbody> 
+				</table>
+				
+			</div>			
+			</article>
+		<%
+					}
+				}
+		  }
+		%>
+		<div class="clear"></div>
+		<br/>
+	</section>
+
+
+</body>
+
+</html>

@@ -1,0 +1,289 @@
+<%@page import="cn.iscas.nfsplatform.dao.entity.MainUser"%>
+<%@page import="cn.iscas.nfsplatform.dao.entity.UserGroup"%>
+<%@page import="cn.iscas.nfsplatform.dao.entity.UserCompany"%>
+<%@page import="cn.iscas.nfsplatform.dao.entity.UserRole"%>
+<%@page import="net.sf.json.JSONArray"%>
+<%@page import="net.sf.json.JSONObject"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%
+String path = request.getContextPath();
+	String basePath = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + path + "/";
+	String basePath1 = request.getScheme() + "://" + request.getServerName() + path + "/";	
+	MainUser currentUser = (MainUser) request.getAttribute("currentUser");
+	JSONObject company = (JSONObject) request.getAttribute("company");
+	JSONArray groups = (JSONArray) request.getAttribute("groups");
+	JSONArray roles = (JSONArray) request.getAttribute("roles");
+	JSONArray companyList = (JSONArray) request.getAttribute("companyList");
+	String username = request.getSession().getAttribute("username").toString();
+%>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>NFS平台集成管理界面</title>
+<link href="<%=basePath%>css/bootstrap.css" rel="stylesheet">
+<script type="text/javascript" src="<%=basePath%>script/jsPlumb/jquery-1.9.0.js"></script>
+<script type="text/javascript" src="<%=basePath%>script/bootstrap.min.js"></script>
+<script type="text/javascript">
+	var company = <%=company%>;
+	var companyList = <%=companyList%>;
+	var groups = <%=groups%>;
+	var roles = <%=roles%>;
+
+	$(document).ready(function() {
+		drawUserInfo(company, groups, roles);
+		bindCompanySelect(companyList);
+		bindSubmitBtn();
+	});
+
+	function bindSubmitBtn() {
+		$("#submitBtn").on("click", function() {
+			$.ajax({
+				url: "./updateuserinfo/update",
+				type: "POST",
+				data: {datas: dataGener()},
+				success: function(data) {
+					if(data == "success") alert("修改成功");
+				},
+				error: function(request, status, error) {
+					console.log("An error occurred while getting data: " + error);
+				}
+			});
+		});
+	}
+	
+	function dataGener() {
+		var data = new Object();
+		var groups = new Array();
+		var roles = new Array();
+		
+		$("input[name='groupCheckbox']").each(function() {
+			if(this.checked)  groups.push($(this).val());
+		});
+		$("input[name='roleCheckbox']").each(function() {
+			if(this.checked)  roles.push($(this).val());
+		});
+		
+		data.company = $("#companySelect").val();
+		data.groups = groups;
+		data.roles = roles;
+		return JSON.stringify(data);
+	}
+	
+	function drawUserInfo(company, groups, roles) {
+		var groupText = "";
+		var roleText = "";
+		for(var i = 0; i < groups.length; i++) {
+			if(i != groups.length - 1) {
+				groupText += groups[i].name + ", ";
+			}
+			else {
+				groupText += groups[i].name;
+			}
+		}
+		for(var i = 0; i < roles.length; i++) {
+			if(i != roles.length - 1) {
+				roleText += roles[i].name + ", ";
+			}
+			else {
+				roleText += roles[i].name;
+			}
+		}		
+		$("#companyName").text(company.name);
+		bindGroupSelect(company.id);
+		bindRoleSelect(company.id);
+		$("#group").text(groupText);
+		$("#role").text(roleText);
+	}
+	
+	function bindCompanySelect(companyList) {
+		var html = "";
+		for(var i = 0; i < companyList.length; i++) {
+			html += "<option value=\"" + companyList[i].id + "\">";
+			html += companyList[i].name;
+			html += "</option>";
+		}
+		$("#companySelect").html(html);
+		$("#companyBtn").on("click", function() {
+			$("#companyName").text($("#companySelect").text());
+			$("#changeCompany").modal('hide');
+			
+			bindGroupSelect($("#companySelect").val());
+			bindRoleSelect($("#companySelect").val());
+		});
+	}
+	
+	function bindGroupSelect(companyId) {
+		var html = "";
+		
+		$.ajax({
+			url: "./updateuserinfo/groups/" + companyId,
+			type: "GET",
+			success: function(data) {
+				for(var i = 0; i < data.length; i++) {
+					html += "<label class=\"checkbox-inline\">";
+					html += "<input name=\"groupCheckbox\" type=\"checkbox\" id=\"group" + data[i].id + "\" value=\"" + data[i].id + "\">" + data[i].name;
+					html += "</label>";
+				}
+				$("#groupSelect").html(html);
+				
+				$("#groupBtn").on("click", function() {
+					var groupText = "";
+					for(var i = 0; i < data.length; i++) {
+						if($("#group" + data[i].id)[0].checked) {
+							groupText += $("#group" + data[i].id)[0].nextSibling.nodeValue + ", ";
+						}
+					}
+					groupText = groupText.substring(0, groupText.length - 2);
+					$("#group").text(groupText);
+					$("#changeGroup").modal('hide');
+				});
+			},
+			error: function(request, status, error) {
+				console.log("An error occurred while getting data: " + error);
+			}
+		});
+	}
+	
+	function bindRoleSelect(companyId) {
+		var html = "";
+		
+		$.ajax({
+			url: "./updateuserinfo/roles/" + companyId,
+			type: "GET",
+			success: function(data) {
+				for(var i = 0; i < data.length; i++) {
+					html += "<label class=\"checkbox-inline\">";
+					html += "<input name=\"roleCheckbox\" type=\"checkbox\" id=\"role" + data[i].id + "\" value=\"" + data[i].id + "\">" + data[i].name;
+					html += "</label>";
+				}
+				$("#roleSelect").html(html);
+				
+				$("#roleBtn").on("click", function() {
+					var roleText = "";
+					for(var i = 0; i < data.length; i++) {
+						if($("#role" + data[i].id)[0].checked) {
+							roleText += $("#role" + data[i].id)[0].nextSibling.nodeValue + ", ";
+						}
+					}
+					roleText = roleText.substring(0, roleText.length - 2);
+					$("#role").text(roleText);
+					$("#changeRole").modal('hide');
+				});
+			},
+			error: function(request, status, error) {
+				console.log("An error occurred while getting data: " + error);
+			}
+		});
+	}
+	
+</script>
+
+</head>
+<body>
+	<div class="container" style="width: 100%; height: 800px">
+		<hr>
+		<div class="row">
+			<div class="col-md-offset-1 col-md-10" id="infoShow">
+				<table class="table table-bordered table-hover">
+					<tr>
+						<td width="20%">用户名</td>
+						<td><%=username%></td>
+						<td width="20%"></td>
+					</tr>
+					<tr>
+						<td>公司</td>
+						<td id="companyName"></td>
+						<td>
+							<a data-toggle="modal" data-target="#changeCompany" href="#">修改</a>
+						</td>
+					</tr>
+					<tr>
+						<td>组</td>
+						<td id="group"></td>
+						<td>
+							<a data-toggle="modal" data-target="#changeGroup" href="#">修改</a>
+						</td>
+					</tr>
+					<tr>
+						<td>角色</td>
+						<td id="role"></td>
+						<td>
+							<a data-toggle="modal" data-target="#changeRole" href="#">修改</a>
+						</td>
+					</tr>				
+				</table>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-offset-1 col-md-10" id="btnShow">
+				<button id="submitBtn" type="button" class="btn btn-primary">确认</button>
+			</div>
+		</div>
+		
+		<div id="modals">
+			<!-- Company Modal -->
+			<div class="modal fade" id="changeCompany" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+							<h4 class="modal-title" id="myModalLabel">公司变更</h4>
+						</div>
+						<div class="modal-body">
+							<select class="form-control" id="companySelect"></select>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+							<button id="companyBtn" type="button" class="btn btn-primary">保存</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		
+			<!-- Group Modal -->
+			<div class="modal fade" id="changeGroup" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+							<h4 class="modal-title" id="myModalLabel">组变更</h4>
+						</div>
+						<div class="modal-body">
+							<div id="groupSelect"></div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+							<button id="groupBtn" type="button" class="btn btn-primary">保存</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Role Modal -->
+			<div class="modal fade" id="changeRole" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+							<h4 class="modal-title" id="myModalLabel">角色变更</h4>
+						</div>
+						<div class="modal-body">
+							<div id="roleSelect"></div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+							<button id="roleBtn" type="button" class="btn btn-primary">保存</button>
+						</div>
+					</div>
+				</div>
+			</div>			
+			
+		</div>
+	</div>
+	
+	
+</body>
+</html>

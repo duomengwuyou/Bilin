@@ -1,0 +1,321 @@
+﻿<%@page import="cn.iscas.nfsplatform.dao.entity.twp.TwpProject"%>
+<%@page import="java.util.Set"%>
+<%@page import="java.util.Date"%>
+<%@page import="java.text.SimpleDateFormat"%>
+<%@ page language="java" contentType="text/html; charset=utf-8"
+	pageEncoding="utf-8"%>
+<%@page import="cn.iscas.nfsplatform.dao.entity.Tool"%>
+<%@page import="java.util.List"%>	
+<%
+	String path = request.getContextPath();
+	String basePath = request.getScheme() + "://"
+			+ request.getServerName()
+			+ path + "/";
+	
+	//basePath2 is used for special use: creating flows
+	String basePath2 = request.getScheme() + "://"
+			+ request.getServerName() + ":" + request.getServerPort()
+			+ path + "/";
+	String username=request.getSession().getAttribute("username").toString();
+	Object userid=request.getSession().getAttribute("userid");
+	
+	Set<String> authoritys = (Set<String>)request.getSession().getAttribute("authoritys");
+	List<TwpProject> participatePros = (List<TwpProject>)request.getSession().getAttribute("participatePs");
+	
+	Integer currentProjectId = (Integer)request.getSession().getAttribute("currentProject");
+	
+	Integer usertasksize = (Integer)request.getSession().getAttribute("usertasksize");
+	
+%>
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8"/>
+	<title>NFS平台集成管理界面</title>
+	
+	<link rel="stylesheet" href="css/layout.css" type="text/css" media="screen" />
+	<!--[if lt IE 9]>
+	<link rel="stylesheet" href="css/ie.css" type="text/css" media="screen" />
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<script type="text/javascript"
+	src="script/jsPlumb/jquery-1.9.0.js"></script>
+	<script src="js/hideshow.js" type="text/javascript"></script>
+	<script src="js/jquery.tablesorter.min.js" type="text/javascript"></script>
+	<script type="text/javascript" src="js/jquery.equalHeight.js"></script>
+	<script type="text/javascript">
+	$(document).ready(function() 
+    	{ 
+      	  $(".tablesorter").tablesorter();
+      	  $("#Relation_Data_Window").css("display","none");
+   	 } 
+	);
+	$(document).ready(function() {
+
+	//When page loads...
+	$(".tab_content").hide(); //Hide all content
+	$("ul.tabs li:first").addClass("active").show(); //Activate first tab
+	$(".tab_content:first").show(); //Show first tab content
+
+	//On Click Event
+	$("ul.tabs li").click(function() {
+
+		$("ul.tabs li").removeClass("active"); //Remove any "active" class
+		$(this).addClass("active"); //Add "active" class to selected tab
+		$(".tab_content").hide(); //Hide all tab content
+
+		var activeTab = $(this).find("a").attr("href"); //Find the href attribute value to identify the active tab + content
+		$(activeTab).fadeIn(); //Fade in the active ID content
+		return false;
+	});
+
+});
+    </script>
+    <script type="text/javascript">
+    $(function(){
+        $('.column').equalHeight();
+    });
+</script>
+
+<script type="text/javascript" src="<%=basePath%>script/gotourl.js"></script>
+
+</head>
+
+
+<body>
+
+	<input style="display: none" value="<%=basePath%>" id="basePath" />
+	<input style="display: none" value="<%=basePath2%>" id="basePath2" />
+	<input style="display: none" value="<%=userid%>" id="userId" />	
+
+	<header id="header">
+		<hgroup>
+			<h1 class="site_title"><a href="index.html">NFS平台集成管理界面</a></h1>
+			<h2 class="section_title">浏览面板</h2>
+			<div class="btn_view_site"><a href="http://itechs.iscas.ac.cn/en/index.htm">关于itechs</a></div>
+		</hgroup>
+	</header> <!-- end of header bar -->
+	
+	<section id="secondary_bar">
+		<div class="user">
+			<p>当前登录用户：<%=username %></p>
+			<a class="logout_user" href="quit" title="退出">退出</a>
+		</div>
+		
+		<div class="breadcrumbs_container">
+			<article class="breadcrumbs"><a href="index.html"><%=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) %></a>
+				<div class="breadcrumb_divider"></div> <a class="current">天气晴    PM2.5:100</a>
+			</article>
+		</div>
+	</section><!-- end of secondary bar -->
+	
+	<aside id="sidebar" class="column">
+		<h3>快捷链接</h3>
+		<ul class="toggle">
+			<li class="icn_new_article"><a href="<%=basePath %>index">首页</a></li>
+			<li class="icn_new_article"><a href="<%=basePath %>englishpage">英文版</a></li>
+			<li class="icn_jump_back"><a href="quit">登出</a></li>
+		</ul>
+		
+		<h3>项目列表</h3>
+		<ul class="toggle">
+			<%
+				if(participatePros != null){
+					for(TwpProject tp : participatePros){
+					 	if(tp.getProjectid() == currentProjectId){
+				%>
+							<li class="icn_new_article"><a href="#" onclick="changeProject(<%=tp.getProjectid()%>)"><strong><%=tp.getProjectname() %>[<%=tp.getGroup().getGroupname() %>]<当前项目></strong></a></li>
+				<%
+					 	}else{
+					 		
+				%>
+							<li class="icn_new_article"><a href="#" onclick="changeProject(<%=tp.getProjectid()%>)"><%=tp.getProjectname() %>[<%=tp.getGroup().getGroupname() %>]</a></li>
+				<%	 		
+					 	}
+					}
+				}
+			%>
+		</ul>
+		
+		<h3>任务列表</h3>
+		<ul class="toggle">
+			<li class="icn_categories"><a href="#" onclick="showUserTasks('<%=userid%>')">查看任务<strong>[<%=usertasksize %>个任务待处理]</strong></a></li>
+		</ul>
+		
+		
+		<%
+			boolean flag = false;
+			if(authoritys != null){
+				for(String s : authoritys){
+					if(s.equals("工作流管理")){
+						flag = true;
+						break;
+					}
+				}
+			}
+			
+			if(flag == true){
+		%>
+		<h3>工作流管理</h3>
+		<ul class="toggle">
+			<li class="icn_new_article"><a href="#" onclick="goToCreateFlow()">创建工作流</a></li>
+			<li class="icn_categories"><a href="#" onclick="goToViewFlows()">工作流列表</a></li>
+			<li class="icn_categories"><a href="#" onclick="goToDataConnection()">查看数据关联</a></li>
+		</ul>
+		<%} %>
+		
+		
+		<h3>三方工具访问</h3>
+		<ul class="toggle">
+			 <%
+			 	List<Tool> choosedtools = (List<Tool>)request.getSession().getAttribute("choosedtools");
+			 	if(choosedtools != null){
+			 		for(Tool t : choosedtools){
+			 %>		
+				 <li class="icn_photo"><a href="#" onclick="goToToolPage('<%=t.getToolname() %>')"><%=t.getToolname() %></a></li>
+			 <%	
+			   		}
+			 	}
+			 %>
+		</ul>
+		
+		
+		<%
+			flag = false;
+			if(authoritys != null){
+				for(String s : authoritys){
+					if(s.equals("工具管理")){
+						flag = true;
+						break;
+					}
+				}
+			}
+			
+			if(flag == true){
+		%>
+		<h3>工具管理</h3>
+		<ul class="toggle">
+			<li class="icn_categories"><a href="#" onclick="goToShowToolList()">查看工具列表</a></li>
+			<li class="icn_view_users"><a href="#"  onclick="goToRegistTool('<%=userid%>')">注册工具</a></li>
+			<li class="icn_view_users"><a href="#"  onclick="goToRegistService('<%=userid%>')">注册服务</a></li>
+		</ul>
+		<%} %>
+		
+		
+		<%
+			flag = false;
+			if(authoritys != null){
+				for(String s : authoritys){
+					if(s.equals("可信评估")){
+						flag = true;
+						break;
+					}
+				}
+			}
+			
+			if(flag == true){
+		%>
+		<h3>可信评估</h3>
+		<ul class="toggle">
+			<li class="icn_new_article"><a href="#" onclick="goToKexinIndicators()">可信评估指标</a></li>
+			<li class="icn_new_article"><a href="#" onclick="goToKexinTool()">可信评估工具</a></li>
+			<li class="icn_categories"><a href="#" onclick="goToShowBar()" >指标统计图</a></li>
+		</ul>
+		<%} %>
+		
+		<h3>个人信息</h3>
+		<ul class="toggle">
+			<li class="icn_add_user"><a href="#" onclick="goToManageAccount()">账户管理</a></li>
+			<li class="icn_add_user"><a href="#" onclick="goToChangeUserInfor()">用户信息管理</a></li>
+		</ul>
+		
+		
+		<%
+			flag = false;
+			if(authoritys != null){
+				for(String s : authoritys){
+					if(s.equals("信息管理")){
+						flag = true;
+						break;
+					}
+				}
+			}
+			
+			if(flag == true){
+		%>
+		<h3>信息管理</h3>
+		<ul class="toggle">
+			<li class="icn_add_user"><a href="#" onclick="goToShowCompanyAndOrg()">公司、组织信息管理</a></li>
+			<li class="icn_add_user"><a href="#" onclick="goToShowUserRole()">用户角色、权限管理</a></li>
+			<li class="icn_add_user"><a href="#" onclick="serviceTypeManage()">服务类别管理</a></li>
+			<li class="icn_add_user"><a href="#" onclick="toolTypeManage()">工具类型管理</a></li>
+			<li class="icn_add_user"><a href="#" onclick="serviceSequenceManage()">业务流程验证管理</a></li>
+		</ul>
+		<%} %>
+		
+		
+		<%
+			flag = false;
+			if(authoritys != null){
+				for(String s : authoritys){
+					if(s.equals("后台管理")){
+						flag = true;
+						break;
+					}
+				}
+			}
+			if(flag == true){
+		%>
+		<h3>后台管理</h3>
+		<ul class="toggle">
+			<li class="icn_settings"><a href="#">系统设置</a></li>
+			<li class="icn_settings"><a href="#" onclick="gotoIPManageService('<%=userid%>')">服务地址管理</a></li>
+		</ul>
+		<%} %>
+		
+		<footer>
+			<hr />
+			<p><strong>Copyright &copy; 2014 itechs</strong></p>
+		</footer>
+	</aside><!-- end of sidebar -->
+	
+
+	
+	<section id="main" class="column">
+	
+		<div id="Relation_Data_Window" style="width:100%; min-height:15%;z-index: 900">
+			
+				<div class="submit_link">
+					<input type="button" value="Bugzilla" class="alt_btn">
+					<select>
+						<option>Bug1</option>
+						<option>Bug2</option>
+					</select>					
+				</div>
+				<div class="submit_link">
+					<input type="button" value="TestLink" class="alt_btn">
+					<select>
+						<option>Test1</option>
+						<option>Test2</option>
+					</select>
+				</div>				
+				<div class="submit_link">
+					<input type="button" value="Jira" class="alt_btn">
+					<select>
+						<option>Req1</option>
+						<option>Req2</option>
+					</select>
+				</div>
+	    </div>
+		
+		<iframe id="content_frame" src ="<%=basePath %>indexcontent" width="99%" height="1050px" frameborder="no" border="0" marginwidth="0" marginheight="0" allowtransparency="yes" sandbox="allow-same-origin allow-forms allow-scripts">
+  			<p>Your browser does not support iframes.</p>
+  			
+		</iframe>
+		<div class="spacer"></div>
+	</section>
+
+</body>
+
+</html>

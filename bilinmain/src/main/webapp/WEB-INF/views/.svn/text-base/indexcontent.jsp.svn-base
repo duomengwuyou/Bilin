@@ -1,0 +1,221 @@
+<%@page import="cn.iscas.nfsplatform.dao.entity.twp.TwpProject"%>
+<%@page import="cn.iscas.nfsplatform.dao.entity.UserRole"%>
+<%@page import="cn.iscas.nfsplatform.dao.entity.Flow"%>
+<%@page import="cn.iscas.nfsplatform.dao.entity.UserGroup"%>
+<%@page import="java.text.SimpleDateFormat"%>
+<%@page import="java.util.Date"%>
+<%@page import="cn.iscas.nfsplatform.pojo.IndexContent"%>
+<%@ page language="java" contentType="text/html; charset=utf-8"
+	pageEncoding="utf-8"%>
+<%
+	String path = request.getContextPath();
+	String basePath = request.getScheme() + "://"
+	+ request.getServerName() + ":" + request.getServerPort()
+	+ path + "/";
+	String username=request.getSession().getAttribute("username").toString();
+	Object userid=request.getSession().getAttribute("userid");
+	
+	IndexContent indexcontent = (IndexContent)request.getAttribute("indexcontent");
+%>
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8"/>
+	<title>NFS平台集成管理界面</title>
+	
+	<link rel="stylesheet" href="css/layout.css" type="text/css" media="screen" />
+	<!--[if lt IE 9]>
+	<link rel="stylesheet" href="css/ie.css" type="text/css" media="screen" />
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<script type="text/javascript"
+	src="script/jsPlumb/jquery-1.9.0.js"></script>
+	<script src="js/hideshow.js" type="text/javascript"></script>
+	<script src="js/jquery.tablesorter.min.js" type="text/javascript"></script>
+	<script type="text/javascript" src="js/jquery.equalHeight.js"></script>
+	<script type="text/javascript">
+	$(document).ready(function() 
+    	{ 
+      	  $(".tablesorter").tablesorter(); 
+   	 } 
+	);
+	$(document).ready(function() {
+
+	//When page loads...
+	$(".tab_content").hide(); //Hide all content
+	$("ul.tabs li:first").addClass("active").show(); //Activate first tab
+	$(".tab_content:first").show(); //Show first tab content
+
+	//On Click Event
+	$("ul.tabs li").click(function() {
+
+		$("ul.tabs li").removeClass("active"); //Remove any "active" class
+		$(this).addClass("active"); //Add "active" class to selected tab
+		$(".tab_content").hide(); //Hide all tab content
+
+		var activeTab = $(this).find("a").attr("href"); //Find the href attribute value to identify the active tab + content
+		$(activeTab).fadeIn(); //Fade in the active ID content
+		return false;
+	});
+
+});
+    </script>
+    <script type="text/javascript">
+    $(function(){
+        $('.column').equalHeight();
+    });
+    
+	function startFlow(flowname){
+		
+		$.ajax({
+			url : $("#basePath").val() + "operateflow/runworkflow/"+flowname,
+			type : "GET",
+			success : function(data, status) {
+				alert("工作流开启成功！");
+			},
+			error : function(request, status, error) {
+				alert("工作流开启成功！");
+			}
+		});	
+	}
+</script>
+
+<script type="text/javascript" src="<%=basePath%>script/gotourl.js"></script>
+
+</head>
+
+
+<body>
+
+	<input style="display: none" value="<%=basePath%>" id="basePath" />
+	<input style="display: none" value="<%=userid%>" id="userId" />	
+	
+	<section id="main" class="column">
+		
+		<h4 class="alert_info"><%=username%>,您好！当前时间为：<%=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())%></h4>
+		<h4 class="alert_info">您所属公司为<%=indexcontent.getUsercompany().getCompanyname()%>,该公司是<%=indexcontent.getUsercompany().getDescription()%>.</h4>
+		<%
+			String groups = "";
+			int i = 1;
+			for(UserGroup ug : indexcontent.getUsergroup()){
+				groups += "("+i+")" + ug.getGroupname();
+				i++;
+			}
+		%>
+		<h4 class="alert_info">您所属的开发组如下：<%=groups%></h4>
+		
+		<%
+					String roles = "";
+					int j = 1;
+					for(UserRole ur : indexcontent.getUserrole()){
+						roles += "("+j+")" + ur.getRolename();
+						j++;
+					}
+				%>
+		<h4 class="alert_info">您所属的角色信息如下：<%=roles%></h4>
+		
+		<%
+					String projects = "";
+					int k = 1;
+					for(TwpProject sp : indexcontent.getUserProjects()){
+						projects += "("+k+")" + sp.getProjectname();
+						k++;
+					}
+				%>
+		<h4 class="alert_info">您所参与的项目：<%=projects %></h4>
+		
+		
+		<article class="module width_full">
+			<header><h3>当前平台信息</h3></header>
+			<div class="module_content">				
+				<article class="stats_overview">
+				
+					<div class="overview_today">
+						<p class="overview_day">平台公司</p>
+						<p class="overview_count"><%=indexcontent.getCompanysize() %></p>
+
+					</div>
+					<div class="overview_today">
+						<p class="overview_day">平台开发组</p>
+						<p class="overview_count"><%=indexcontent.getGroupsize() %></p>
+					</div>
+				</article>
+				<article class="stats_overview">
+					<div class="overview_today">
+						<p class="overview_day">注册工具</p>
+						<p class="overview_count"><%=indexcontent.getToolSize() %></p>
+					</div>
+					
+					<div class="overview_today">
+						<p class="overview_day">注册服务</p>
+						<p class="overview_count"><%=indexcontent.getServiceSize() %></p>
+					</div>
+				</article>
+				<article class="stats_overview">
+
+					<div class="overview_today">
+						<p class="overview_day">平台用户</p>
+						<p class="overview_count"><%=indexcontent.getUsersize() %></p>
+					</div>
+					<div class="overview_today">
+						<p class="overview_day">平台项目</p>
+						<p class="overview_count"><%=indexcontent.getProjectsize()%></p>
+					</div>
+				</article>				
+				
+				<div class="clear"></div>
+			</div>
+		</article><!-- end of stats article -->
+		
+		<article class="module width_full">
+		<header><h3 class="tabs_involved">您所创建的工作流：</h3>
+		<ul class="tabs">
+   			<li><a href="#tab1">工作流</a></li>
+		</ul>
+		</header>
+
+		<div class="tab_container">
+			<div id="tab1" class="tab_content">
+			<table class="tablesorter" cellspacing="0"> 
+			<thead> 
+				<tr>
+					<th></th> 
+    				<th>工作流名称</th> 
+    				<th>运行时名称</th>
+    				<th>操作</th> 
+				</tr> 
+			</thead> 
+			<tbody>
+				<%
+					if(indexcontent.getSelfflows() != null){
+						for(Flow f : indexcontent.getSelfflows()){
+				%>
+						<tr> 
+							<td></td>
+		    				<td><%=f.getName() %></td> 
+		    				<td><%=f.getRealflowname() %></td> 
+		    				<td><input type="image" src="images/icn_edit.png" title="运行" onclick="startFlow('<%=f.getRealflowname()%>')"  class="btn btn-default"></td> 
+						</tr>  
+				<%								
+						}
+					}
+				%> 
+
+			</tbody> 
+			</table>
+			</div><!-- end of #tab1 -->
+						
+		</div><!-- end of .tab_container -->
+		
+		</article><!-- end of content manager article -->
+		
+		
+		<div class="clear"></div>
+		
+		<div class="spacer"></div>
+	</section>
+
+</body>
+
+</html>

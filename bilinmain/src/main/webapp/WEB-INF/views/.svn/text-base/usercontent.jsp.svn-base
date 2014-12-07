@@ -1,0 +1,128 @@
+﻿<%@page import="cn.iscas.nfsplatform.dao.entity.MainUser"%>
+<%@page import="cn.iscas.nfsplatform.pojo.UserBriefModel"%>
+<%@page import="cn.iscas.nfsplatform.pojo.UserListModel"%>
+<%@page import="cn.iscas.nfsplatform.pojo.ToolBriefModel"%>
+<%@page import="java.util.List"%>
+<%@page import="cn.iscas.nfsplatform.pojo.ToolListModel"%>
+<%@ page language="java" contentType="text/html; charset=utf-8"
+	pageEncoding="utf-8"%>
+<%
+	String path = request.getContextPath();
+	String basePath = request.getScheme() + "://"
+			+ request.getServerName()
+			+ path + "/";
+	String username=request.getSession().getAttribute("username").toString();
+	Object userid=request.getSession().getAttribute("userid");
+		
+	MainUser currentUser = (MainUser)request.getAttribute("currentUser");
+
+%>
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8"/>
+	<title>NFS平台集成管理界面</title>
+	
+	<link rel="stylesheet" href="../css/layout.css" type="text/css" media="screen" />
+	<!--[if lt IE 9]>
+	<link rel="stylesheet" href="css/ie.css" type="text/css" media="screen" />
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<script type="text/javascript"
+	src="../script/jsPlumb/jquery-1.9.0.js"></script>
+	<script src="../js/hideshow.js" type="text/javascript"></script>
+	<script src="../js/jquery.tablesorter.min.js" type="text/javascript"></script>
+	<script type="text/javascript" src="../js/jquery.equalHeight.js"></script>
+	<script type="text/javascript">
+	$(document).ready(function() 
+    	{ 
+      	  $(".tablesorter").tablesorter(); 
+   	 } 
+	);
+	$(document).ready(function() {
+
+	//When page loads...
+	$(".tab_content").hide(); //Hide all content
+	$("ul.tabs li:first").addClass("active").show(); //Activate first tab
+	$(".tab_content:first").show(); //Show first tab content
+
+	//On Click Event
+	$("ul.tabs li").click(function() {
+
+		$("ul.tabs li").removeClass("active"); //Remove any "active" class
+		$(this).addClass("active"); //Add "active" class to selected tab
+		$(".tab_content").hide(); //Hide all tab content
+
+		var activeTab = $(this).find("a").attr("href"); //Find the href attribute value to identify the active tab + content
+		$(activeTab).fadeIn(); //Fade in the active ID content
+		return false;
+	});
+
+});
+    </script>
+    <script type="text/javascript">
+    $(function(){
+        $('.column').equalHeight();
+    });
+</script>
+
+<script type="text/javascript" src="<%=basePath%>script/usertools.js"></script>
+
+</head>
+
+
+
+<body>
+
+	<input style="display: none" value="<%=basePath%>" id="basePath" />
+	<input style="display: none" value="<%=userid%>" id="userId" />	
+	
+	<section id="main" class="column">
+		
+		<h4 class="alert_info"><%=username %>，您好。欢迎登录NFS平台集成管理界面，以下是你的账户信息。</h4>
+		<div class="clear"></div>
+		
+		<article class="module width_full">
+			<header><h3>更改个人信息</h3></header>
+				<div class="module_content">
+				
+						<fieldset>
+							<label>用户名</label>
+							<input type="text" id="updatename" value="<%=username %>">
+						</fieldset>
+						<div class="clear"></div>
+				
+						<fieldset style="width:48%; float:left; margin-right: 3%;"> <!-- to make two field float next to one another, adjust values accordingly -->
+							<label>新密码</label>
+							<input type="text" id="updatepassword1" style="width:92%;">
+						</fieldset>
+						<fieldset style="width:48%; float:left;"> <!-- to make two field float next to one another, adjust values accordingly -->
+							<label>新密码确认</label>
+							<input type="text" id="updatepassword2" style="width:92%;">
+						</fieldset>
+						<div class="clear"></div>					
+				
+						<fieldset>
+							<label>邮箱</label>
+							<input type="text" id="updateemail" value="<%=currentUser.getEmail() %>">
+						</fieldset>
+						<div class="clear"></div>
+						
+				</div>
+			<footer>
+				<div class="submit_link">
+					<input type="submit" value="提交" onclick="updateUserInformation()" class="alt_btn">
+				</div>
+			</footer>
+		</article><!-- end of post new article -->
+
+		
+		
+		<div class="spacer"></div>
+	</section>
+
+
+</body>
+
+</html>
